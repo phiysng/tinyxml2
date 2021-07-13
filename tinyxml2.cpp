@@ -1062,11 +1062,20 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr )
 	if (_document->Error())
 		return 0;
 
+    // 默认的行为是递归的解析每一个子树?
+    // @TODO:这样是有效的xml?
+    // <a/><a/>
 	while( p && *p ) {
         XMLNode* node = 0;
 
+        // 返回不同的对象 包括头 DTD CDATA 注释 普通节点等
+        // 此时移动到头后面的位置
+        //<!_ 
+        //  ⬆
         p = _document->Identify( p, &node );
         TIXMLASSERT( p );
+
+        // 当前就是最深的一层 没有嵌套的节点了
         if ( node == 0 ) {
             break;
         }
@@ -1074,6 +1083,8 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr )
        const int initialLineNum = node->_parseLineNum;
 
         StrPair endTag;
+        // 递归解析节点
+        // @TODO: 注意这里的多态解析 上面返回的node是不同的子类型 其`ParseDeep`被相应重写了
         p = node->ParseDeep( p, &endTag, curLineNumPtr );
         if ( !p ) {
             DeleteNode( node );
