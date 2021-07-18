@@ -45,6 +45,8 @@ if (tinyxml2_BUILD_TESTING)
     add_executable(xmltest xmltest.cpp)
     target_link_libraries(xmltest PRIVATE tinyxml2::tinyxml2)
 
+    add_executable(xmls xmls.cpp)
+    target_link_libraries(xmls PRIVATE tinyxml2::tinyxml2)
     add_test(
         NAME xmltest
         COMMAND xmltest

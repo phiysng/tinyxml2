@@ -1322,7 +1322,9 @@ XMLDeclaration::~XMLDeclaration()
     //printf( "~XMLDeclaration\n" );
 }
 
-
+/**
+ * 寻找第一个`?>`结束的字符串 跳过并返回其后紧跟的字符的指针
+ */
 char* XMLDeclaration::ParseDeep( char* p, StrPair*, int* curLineNumPtr )
 {
     // Declaration parses as text.
