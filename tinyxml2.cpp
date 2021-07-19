@@ -1058,6 +1058,25 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr )
     // 'endTag' is the end tag for this node, it is returned by a call to a child.
     // 'parentEnd' is the end tag for the parent, which is filled in and returned.
 
+    // 
+    // 对于<p> Text <br>Block</br></p>
+    // 我们会把`Text`解析成一个TextNode 而`Block`解析成另一个TextNode
+    //
+    // 文本 注释都是没有子节点的 (虽然说tinyxml2提供了将<p></p>中的节点当作一个文本节点处理的概念)
+    // 在解析的时候我们在`Text`后遇到`<`即解析当前文本结束，回退到这个`<`,然后继续解析下一个<br>节点。
+    // 
+    // 解析<br>完成后，因为<br>不是一个关闭节点，因此我们需要递归一层 来解析接下来的`Block`,
+    // 解析完`Block`后，递归调用不能返回，但是也不需要再深入一层，因为文本标签是自关闭的。
+    // 继续向下执行，遇到了</br> 返回并将这个节点返回给了<br>所在的层。
+    // <br>所在的层吃掉了这个关闭，同样不能返回，需要继续解析下一个节点，解析到</p> ,这下可以返回并将
+    // 结束符返回到<p>层，<p>层匹配这个结束符， 然后继续读取下一个节点。
+    // 
+    // 总结来说:
+    //  一个<p> 进入下一层递归
+    //  一个<p/> 保留在原递归层级
+    //  一个</p> 返回上一层
+    //
+
 	XMLDocument::DepthTracker tracker(_document);
 	if (_document->Error())
 		return 0;
@@ -1139,6 +1158,8 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr )
 
             // Handle an end tag returned to this level.
             // And handle a bunch of annoying errors.
+            // 类似<a/>的标签不修改endTag 同时状态是CLOSED
+            // 而从递归调用中返回的节点状态是OPEN
             bool mismatch = false;
             if ( endTag.Empty() ) {
                 if ( ele->ClosingType() == XMLElement::OPEN ) {
